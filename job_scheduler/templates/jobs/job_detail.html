@@ -1,0 +1,84 @@
+{% extends 'base.html' %} {% block title %}{{ job.name }} - Job Details{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-md-12">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1>{{ job.name }}</h1>
+			<div>
+				<a href="{% url 'jobs:job_edit' job.id %}" class="btn btn-warning"
+					>Edit Job</a
+				>
+				<a href="{% url 'jobs:job_list' %}" class="btn btn-secondary"
+					>Back to List</a
+				>
+			</div>
+		</div>
+
+		<div class="card mb-4">
+			<div class="card-header">
+				<h5>Job Details</h5>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					<div class="col-md-6">
+						<p>
+							<strong>Status:</strong>
+							<span class="badge bg-{{ job.status_color }}"
+								>{{ job.status }}</span
+							>
+						</p>
+						<p><strong>Schedule:</strong> {{ job.schedule }}</p>
+						<p><strong>Created:</strong> {{ job.created_at }}</p>
+						<p><strong>Last Run:</strong> {{ job.last_run|default:"Never" }}</p>
+						<p>
+							<strong>Next Run:</strong> {{ job.next_run|default:"Not scheduled"
+							}}
+						</p>
+					</div>
+					<div class="col-md-6">
+						<p><strong>Description:</strong></p>
+						<p>{{ job.description|default:"No description provided." }}</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<h5>Job History</h5>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Run Time</th>
+								<th>Status</th>
+								<th>Duration</th>
+								<th>Result</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for run in job.history.all %}
+							<tr>
+								<td>{{ run.started_at }}</td>
+								<td>
+									<span class="badge bg-{{ run.status_color }}">
+										{{ run.status }}
+									</span>
+								</td>
+								<td>{{ run.duration }}</td>
+								<td>{{ run.result|truncatechars:50 }}</td>
+							</tr>
+							{% empty %}
+							<tr>
+								<td colspan="4" class="text-center">No history available.</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

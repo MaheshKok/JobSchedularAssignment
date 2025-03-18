@@ -1,0 +1,78 @@
+{% extends 'base.html' %} {% block title %}Jobs{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-md-12">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1>Jobs</h1>
+			<a href="{% url 'jobs:job_create' %}" class="btn btn-primary"
+				>Create New Job</a
+			>
+		</div>
+
+		<div class="card">
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Schedule</th>
+								<th>Status</th>
+								<th>Last Run</th>
+								<th>Next Run</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for job in jobs %}
+							<tr>
+								<td>{{ job.name }}</td>
+								<td>{{ job.schedule }}</td>
+								<td>
+									<span class="badge bg-{{ job.status_color }}">
+										{{ job.status }}
+									</span>
+								</td>
+								<td>{{ job.last_run|default:'-' }}</td>
+								<td>{{ job.next_run|default:'-' }}</td>
+								<td>
+									<div class="btn-group">
+										<a
+											href="{% url 'jobs:job_detail' job.id %}"
+											class="btn btn-sm btn-info"
+											>View</a
+										>
+										<a
+											href="{% url 'jobs:job_edit' job.id %}"
+											class="btn btn-sm btn-warning"
+											>Edit</a
+										>
+										<form
+											method="post"
+											action="{% url 'jobs:job_delete' job.id %}"
+											style="display: inline"
+										>
+											{% csrf_token %}
+											<button
+												type="submit"
+												class="btn btn-sm btn-danger"
+												onclick="return confirm('Are you sure?')"
+											>
+												Delete
+											</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+							{% empty %}
+							<tr>
+								<td colspan="6" class="text-center">No jobs found.</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
