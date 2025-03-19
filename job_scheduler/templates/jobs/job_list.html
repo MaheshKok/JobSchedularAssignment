@@ -1,72 +1,210 @@
-{% extends 'base.html' %} {% block title %}Jobs{% endblock %} {% block content %}
-<div class="row">
-	<div class="col-md-12">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>Jobs</h1>
-			<a href="{% url 'jobs:job_create' %}" class="btn btn-primary"
-				>Create New Job</a
-			>
-		</div>
+{% extends "base.html" %}
 
-		<div class="card">
-			<div class="card-body">
-				<div class="table-responsive">
-					<table class="table">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Status</th>
-								<th>Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for job in jobs %}
-							<tr>
-								<td>{{ job.name }}</td>
-								<td>
-									<span class="badge bg-{{ job.status_color }}">
-										{{ job.status }}
-									</span>
-								</td>
-								<td>
-									<div class="btn-group">
-										<a
-											href="{% url 'jobs:job_detail' job.id %}"
-											class="btn btn-sm btn-info"
-											>View</a
-										>
-										<a
-											href="{% url 'jobs:job_edit' job.id %}"
-											class="btn btn-sm btn-warning"
-											>Edit</a
-										>
-										<form
-											method="post"
-											action="{% url 'jobs:job_delete' job.id %}"
-											style="display: inline"
-										>
-											{% csrf_token %}
-											<button
-												type="submit"
-												class="btn btn-sm btn-danger"
-												onclick="return confirm('Are you sure?')"
-											>
-												Delete
-											</button>
-										</form>
-									</div>
-								</td>
-							</tr>
-							{% empty %}
-							<tr>
-								<td colspan="6" class="text-center">No jobs found.</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-	</div>
+{% block content %}
+<div class="container mt-4">
+    <h2>Jobs</h2>
+    
+    <!-- Analytics Dashboard -->
+    <div class="row mb-4">
+        <!-- Job Status Stats -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Job Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-secondary">Pending</h6>
+                                <h3>{{ stats.pending_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-primary">Running</h6>
+                                <h3>{{ stats.running_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-success">Completed</h6>
+                                <h3>{{ stats.completed_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-danger">Failed</h6>
+                                <h3>{{ stats.failed_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Priority Stats -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Priority Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-danger">High Priority</h6>
+                                <h3>{{ stats.high_priority_count }}</h3>
+                                <small>{{ stats.high_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-warning">Medium Priority</h6>
+                                <h3>{{ stats.medium_priority_count }}</h3>
+                                <small>{{ stats.medium_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-info">Low Priority</h6>
+                                <h3>{{ stats.low_priority_count }}</h3>
+                                <small>{{ stats.low_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Average Wait Time</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2>{{ stats.avg_wait_time|floatformat:3 }}</h2>
+                    <p class="text-muted">seconds</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Average Execution Time</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2>{{ stats.avg_execution_time|floatformat:3 }}</h2>
+                    <p class="text-muted">seconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All</option>
+                        {% for status_code, status_name in status_choices %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="priority" class="form-label">Priority</label>
+                    <select name="priority" id="priority" class="form-select">
+                        <option value="">All</option>
+                        {% for priority_code, priority_name in priority_choices %}
+                        <option value="{{ priority_code }}" {% if priority_filter == priority_code %}selected{% endif %}>
+                            {{ priority_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="sort" class="form-label">Sort By</label>
+                    <select name="sort" id="sort" class="form-select">
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                        <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>Name (Z-A)</option>
+                        <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority (Low-High)</option>
+                        <option value="-priority" {% if sort_by == '-priority' %}selected{% endif %}>Priority (High-Low)</option>
+                        <option value="deadline" {% if sort_by == 'deadline' %}selected{% endif %}>Deadline (Earliest)</option>
+                        <option value="-deadline" {% if sort_by == '-deadline' %}selected{% endif %}>Deadline (Latest)</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'jobs:job_list' %}" class="btn btn-secondary ms-2">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr>
+                            <td>{{ job.name }}</td>
+                            <td>
+                                <span class="badge bg-{% if job.priority == 'high' %}danger{% elif job.priority == 'medium' %}warning{% else %}info{% endif %}">
+                                    {{ job.get_priority_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ job.status_color }}">
+                                    {{ job.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ job.created_at|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ job.deadline|date:"Y-m-d H:i:s" }}</td>
+                            <td>
+                                <a href="{% url 'jobs:job_detail' job_id=job.id %}" class="btn btn-sm btn-info">
+                                    Details
+                                </a>
+                                {% if job.status == 'pending' %}
+                                <a href="{% url 'jobs:job_edit' job_id=job.id %}" class="btn btn-sm btn-warning">
+                                    Edit
+                                </a>
+                                <a href="{% url 'jobs:job_delete' job_id=job.id %}" class="btn btn-sm btn-danger">
+                                    Delete
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No jobs found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock %}
+{% endblock %} 

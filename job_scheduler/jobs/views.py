@@ -175,14 +175,12 @@ def job_create(request):
 @login_required
 def job_list(request):
     """
-    View for listing all jobs for current user with sorting and filtering
+    View for listing all jobs for current user with sorting, filtering and analytics
     """
     # Get filter parameters
     status_filter = request.GET.get("status")
     priority_filter = request.GET.get("priority")
-    sort_by = request.GET.get(
-        "sort", "-created_at"
-    )  # Default sort by creation date desc
+    sort_by = request.GET.get("sort", "-created_at")
 
     # Start with all user's jobs
     jobs = Job.objects.filter(user=request.user)
@@ -209,28 +207,78 @@ def job_list(request):
     if sort_by in valid_sort_fields:
         jobs = jobs.order_by(valid_sort_fields[sort_by])
 
-    # Get statistics
+    # Calculate analytics
+    all_user_jobs = Job.objects.filter(user=request.user)
+
+    # Status counts
     stats = {
-        "pending_count": Job.objects.filter(
-            user=request.user, status="pending"
-        ).count(),
-        "running_count": Job.objects.filter(
-            user=request.user, status="running"
-        ).count(),
-        "completed_count": Job.objects.filter(
-            user=request.user, status="completed"
-        ).count(),
-        "failed_count": Job.objects.filter(user=request.user, status="failed").count(),
-        "high_priority_count": Job.objects.filter(
-            user=request.user, priority="high"
-        ).count(),
-        "medium_priority_count": Job.objects.filter(
-            user=request.user, priority="medium"
-        ).count(),
-        "low_priority_count": Job.objects.filter(
-            user=request.user, priority="low"
-        ).count(),
+        "pending_count": all_user_jobs.filter(status="pending").count(),
+        "running_count": all_user_jobs.filter(status="running").count(),
+        "completed_count": all_user_jobs.filter(status="completed").count(),
+        "failed_count": all_user_jobs.filter(status="failed").count(),
     }
+
+    # Priority counts
+    stats.update(
+        {
+            "high_priority_count": all_user_jobs.filter(priority="high").count(),
+            "medium_priority_count": all_user_jobs.filter(priority="medium").count(),
+            "low_priority_count": all_user_jobs.filter(priority="low").count(),
+        }
+    )
+
+    # Calculate average wait time for completed jobs
+    completed_jobs = all_user_jobs.filter(status="completed")
+    total_wait_time = 0
+    wait_time_count = 0
+
+    for job in completed_jobs:
+        if job.started_at and job.created_at:
+            wait_time = (job.started_at - job.created_at).total_seconds()
+            total_wait_time += wait_time
+            wait_time_count += 1
+
+    stats["avg_wait_time"] = (
+        round(total_wait_time / wait_time_count, 3) if wait_time_count > 0 else 0
+    )
+
+    # Calculate average execution time
+    total_execution_time = 0
+    execution_count = 0
+
+    for job in completed_jobs:
+        if job.duration is not None:
+            total_execution_time += job.duration
+            execution_count += 1
+
+    stats["avg_execution_time"] = (
+        round(total_execution_time / execution_count, 3) if execution_count > 0 else 0
+    )
+
+    # Calculate priority percentages
+    total_jobs = all_user_jobs.count()
+    if total_jobs > 0:
+        stats.update(
+            {
+                "high_priority_percentage": round(
+                    (stats["high_priority_count"] / total_jobs) * 100, 1
+                ),
+                "medium_priority_percentage": round(
+                    (stats["medium_priority_count"] / total_jobs) * 100, 1
+                ),
+                "low_priority_percentage": round(
+                    (stats["low_priority_count"] / total_jobs) * 100, 1
+                ),
+            }
+        )
+    else:
+        stats.update(
+            {
+                "high_priority_percentage": 0,
+                "medium_priority_percentage": 0,
+                "low_priority_percentage": 0,
+            }
+        )
 
     context = {
         "jobs": jobs,

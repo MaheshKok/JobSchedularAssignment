@@ -4,6 +4,106 @@
 <div class="container mt-4">
     <h2>Jobs</h2>
     
+    <!-- Analytics Dashboard -->
+    <div class="row mb-4">
+        <!-- Job Status Stats -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Job Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-secondary">Pending</h6>
+                                <h3>{{ stats.pending_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-primary">Running</h6>
+                                <h3>{{ stats.running_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-success">Completed</h6>
+                                <h3>{{ stats.completed_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-danger">Failed</h6>
+                                <h3>{{ stats.failed_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Priority Stats -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Priority Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-danger">High Priority</h6>
+                                <h3>{{ stats.high_priority_count }}</h3>
+                                <small>{{ stats.high_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-warning">Medium Priority</h6>
+                                <h3>{{ stats.medium_priority_count }}</h3>
+                                <small>{{ stats.medium_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="text-center">
+                                <h6 class="text-info">Low Priority</h6>
+                                <h3>{{ stats.low_priority_count }}</h3>
+                                <small>{{ stats.low_priority_percentage }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Average Wait Time</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2>{{ stats.avg_wait_time|floatformat:3 }}</h2>
+                    <p class="text-muted">seconds</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Average Execution Time</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2>{{ stats.avg_execution_time|floatformat:3 }}</h2>
+                    <p class="text-muted">seconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
@@ -48,42 +148,6 @@
                     <a href="{% url 'jobs:job_list' %}" class="btn btn-secondary ms-2">Reset</a>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Pending</h5>
-                    <p class="card-text display-6">{{ stats.pending_count }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Running</h5>
-                    <p class="card-text display-6">{{ stats.running_count }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Completed</h5>
-                    <p class="card-text display-6">{{ stats.completed_count }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Failed</h5>
-                    <p class="card-text display-6">{{ stats.failed_count }}</p>
-                </div>
-            </div>
         </div>
     </div>
 
