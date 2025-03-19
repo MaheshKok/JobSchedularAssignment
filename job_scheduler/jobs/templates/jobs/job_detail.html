@@ -1,5 +1,5 @@
-{% extends "base.html" %} Job Details - {{ job.name }} {% block title %}Job
-Details - {{ job.name }}{% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}Job Details - {{ job.name }}{%
+endblock %} {% block content %}
 <div class="container mt-4">
 	<div class="row">
 		<div class="col-md-12 mb-4">
@@ -34,24 +34,23 @@ Details - {{ job.name }}{% endblock %} {% block content %}
 									<th>Created At:</th>
 									<td>{{ job.created_at|date:"Y-m-d H:i:s" }}</td>
 								</tr>
+								<tr>
+									<th>Deadline:</th>
+									<td>{{ job.deadline|date:"Y-m-d H:i:s" }}</td>
+								</tr>
+								<tr>
+									<th>Estimated Duration:</th>
+									<td>{{ job.estimated_duration }} seconds</td>
+								</tr>
 								{% if job.started_at %}
 								<tr>
 									<th>Started At:</th>
 									<td>{{ job.started_at|date:"Y-m-d H:i:s" }}</td>
 								</tr>
-								<tr>
-									<th>Deadline:</th>
-									<td>{{ job.deadline|date:"Y-m-d H:i:s" }}</td>
-								</tr>
-
 								{% endif %} {% if job.completed_at %}
 								<tr>
 									<th>Completed At:</th>
 									<td>{{ job.completed_at|date:"Y-m-d H:i:s" }}</td>
-								</tr>
-								<tr>
-									<th>Estimated Duration:</th>
-									<td>{{ job.estimated_duration }} seconds</td>
 								</tr>
 								<tr>
 									<th>Actual Duration:</th>
@@ -82,6 +81,59 @@ Details - {{ job.name }}{% endblock %} {% block content %}
 								{% endif %}
 							</div>
 						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+					<h5>Execution History</h5>
+				</div>
+				<div class="card-body">
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<th>Started At</th>
+									<th>Completed At</th>
+									<th>Duration (s)</th>
+									<th>Status</th>
+									<th>Error Message</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for execution in executions %}
+								<tr>
+									<td>{{ execution.started_at|date:"Y-m-d H:i:s.u" }}</td>
+									<td>{{ execution.completed_at|date:"Y-m-d H:i:s.u" }}</td>
+									<td>{{ execution.execution_time|floatformat:3 }}</td>
+									<td>
+										<span
+											class="badge {% if execution.success %}bg-success{% else %}bg-danger{% endif %}"
+										>
+											{% if execution.success %}Success{% else %}Failed{% endif
+											%}
+										</span>
+									</td>
+									<td>
+										{% if execution.error_message %}
+										<span class="text-danger"
+											>{{ execution.error_message|truncatechars:50 }}</span
+										>
+										{% else %} - {% endif %}
+									</td>
+								</tr>
+								{% empty %}
+								<tr>
+									<td colspan="5" class="text-center">
+										No execution history available.
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>

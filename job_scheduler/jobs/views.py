@@ -175,15 +175,39 @@ def job_create(request):
 @login_required
 def job_list(request):
     """
-    View for listing all jobs for current user
+    View for listing all jobs for current user with sorting and filtering
     """
+    # Get filter parameters
     status_filter = request.GET.get("status")
+    priority_filter = request.GET.get("priority")
+    sort_by = request.GET.get(
+        "sort", "-created_at"
+    )  # Default sort by creation date desc
 
-    # Filter jobs by status if provided
+    # Start with all user's jobs
+    jobs = Job.objects.filter(user=request.user)
+
+    # Apply filters
     if status_filter and status_filter in dict(Job.STATUS_CHOICES):
-        jobs = Job.objects.filter(user=request.user, status=status_filter)
-    else:
-        jobs = Job.objects.filter(user=request.user)
+        jobs = jobs.filter(status=status_filter)
+    if priority_filter and priority_filter in dict(Job.PRIORITY_CHOICES):
+        jobs = jobs.filter(priority=priority_filter)
+
+    # Apply sorting
+    valid_sort_fields = {
+        "name": "name",
+        "-name": "-name",
+        "created_at": "created_at",
+        "-created_at": "-created_at",
+        "priority": "priority",
+        "-priority": "-priority",
+        "status": "status",
+        "-status": "-status",
+        "deadline": "deadline",
+        "-deadline": "-deadline",
+    }
+    if sort_by in valid_sort_fields:
+        jobs = jobs.order_by(valid_sort_fields[sort_by])
 
     # Get statistics
     stats = {
@@ -208,30 +232,17 @@ def job_list(request):
         ).count(),
     }
 
-    # Calculate average wait time for completed jobs
-    completed_jobs = Job.objects.filter(user=request.user, status="completed")
-    if completed_jobs.exists():
-        # Calculate average wait time manually
-        total_wait_time = 0
-        count = 0
-        for job in completed_jobs:
-            if job.started_at and job.created_at:
-                wait_time = (job.started_at - job.created_at).total_seconds()
-                total_wait_time += wait_time
-                count += 1
+    context = {
+        "jobs": jobs,
+        "stats": stats,
+        "status_filter": status_filter,
+        "priority_filter": priority_filter,
+        "sort_by": sort_by,
+        "status_choices": Job.STATUS_CHOICES,
+        "priority_choices": Job.PRIORITY_CHOICES,
+    }
 
-        if count > 0:
-            stats["avg_wait_time"] = total_wait_time / count
-
-    return render(
-        request,
-        "jobs/job_list.html",
-        {
-            "jobs": jobs,
-            "stats": stats,
-            "status_filter": status_filter,
-        },
-    )
+    return render(request, "jobs/job_list.html", context)
 
 
 @login_required
@@ -344,3 +355,52 @@ class JobExecutionViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Only return executions for jobs belonging to the current user"""
         return JobExecution.objects.filter(job__user=self.request.user)
+
+
+@login_required
+def job_execution_list(request):
+    """
+    View for listing all job executions with sorting and filtering
+    """
+    # Get filter parameters
+    job_filter = request.GET.get("job")
+    success_filter = request.GET.get("success")
+    sort_by = request.GET.get("sort", "-started_at")  # Default sort by start time desc
+
+    # Get all executions for the user's jobs
+    executions = JobExecution.objects.filter(job__user=request.user).select_related(
+        "job"
+    )
+
+    # Apply filters
+    if job_filter:
+        executions = executions.filter(job__id=job_filter)
+    if success_filter is not None:
+        executions = executions.filter(success=success_filter == "true")
+
+    # Apply sorting
+    valid_sort_fields = {
+        "started_at": "started_at",
+        "-started_at": "-started_at",
+        "completed_at": "completed_at",
+        "-completed_at": "-completed_at",
+        "execution_time": "execution_time",
+        "-execution_time": "-execution_time",
+        "job__name": "job__name",
+        "-job__name": "-job__name",
+    }
+    if sort_by in valid_sort_fields:
+        executions = executions.order_by(valid_sort_fields[sort_by])
+
+    # Get all jobs for the filter dropdown
+    user_jobs = Job.objects.filter(user=request.user)
+
+    context = {
+        "executions": executions,
+        "job_filter": job_filter,
+        "success_filter": success_filter,
+        "sort_by": sort_by,
+        "user_jobs": user_jobs,
+    }
+
+    return render(request, "jobs/job_execution_list.html", context)

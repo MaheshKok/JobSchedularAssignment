@@ -137,7 +137,13 @@ class JobScheduler:
                     # Update execution record
                     execution.completed_at = job.completed_at
                     execution.success = True
-                    execution.save(update_fields=["completed_at", "success"])
+                    execution.execution_time = round(
+                        (execution.completed_at - execution.started_at).total_seconds(),
+                        3,
+                    )
+                    execution.save(
+                        update_fields=["completed_at", "success", "execution_time"]
+                    )
 
                     logger.info(f"Completed job {job.name} ({job.id})")
 

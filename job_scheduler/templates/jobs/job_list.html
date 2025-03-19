@@ -15,10 +15,7 @@
 						<thead>
 							<tr>
 								<th>Name</th>
-								<th>Schedule</th>
 								<th>Status</th>
-								<th>Last Run</th>
-								<th>Next Run</th>
 								<th>Actions</th>
 							</tr>
 						</thead>
@@ -26,14 +23,11 @@
 							{% for job in jobs %}
 							<tr>
 								<td>{{ job.name }}</td>
-								<td>{{ job.schedule }}</td>
 								<td>
 									<span class="badge bg-{{ job.status_color }}">
 										{{ job.status }}
 									</span>
 								</td>
-								<td>{{ job.last_run|default:'-' }}</td>
-								<td>{{ job.next_run|default:'-' }}</td>
 								<td>
 									<div class="btn-group">
 										<a

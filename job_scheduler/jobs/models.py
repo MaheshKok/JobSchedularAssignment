@@ -104,6 +104,7 @@ class JobExecution(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="executions")
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    execution_time = models.FloatField(null=True)
     success = models.BooleanField(default=False)
     error_message = models.TextField(null=True, blank=True)
 

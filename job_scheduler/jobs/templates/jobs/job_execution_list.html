@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+	<h2>Job Execution History</h2>
+
+	<!-- Filters -->
+	<div class="card mb-4">
+		<div class="card-body">
+			<form method="get" class="row g-3">
+				<div class="col-md-4">
+					<label for="job" class="form-label">Job</label>
+					<select name="job" id="job" class="form-select">
+						<option value="">All Jobs</option>
+						{% for job in user_jobs %}
+						<option value="{{ job.id }}" {% if job_filter == job.id %}selected{% endif %}>
+							{{ job.name }}
+						</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="col-md-3">
+					<label for="success" class="form-label">Status</label>
+					<select name="success" id="success" class="form-select">
+						<option value="">All</option>
+						<option value="true" {% if success_filter == 'true' %}selected{% endif %}>Successful</option>
+						<option value="false" {% if success_filter == 'false' %}selected{% endif %}>Failed</option>
+					</select>
+				</div>
+				<div class="col-md-3">
+					<label for="sort" class="form-label">Sort By</label>
+					<select name="sort" id="sort" class="form-select">
+						<option value="-started_at" {% if sort_by == '-started_at' %}selected{% endif %}>Latest Start</option>
+						<option value="started_at" {% if sort_by == 'started_at' %}selected{% endif %}>Earliest Start</option>
+						<option value="-completed_at" {% if sort_by == '-completed_at' %}selected{% endif %}>Latest Completion</option>
+						<option value="completed_at" {% if sort_by == 'completed_at' %}selected{% endif %}>Earliest Completion</option>
+						<option value="-execution_time" {% if sort_by == '-execution_time' %}selected{% endif %}>Longest Duration</option>
+						<option value="execution_time" {% if sort_by == 'execution_time' %}selected{% endif %}>Shortest Duration</option>
+						<option value="job__name" {% if sort_by == 'job__name' %}selected{% endif %}>Job Name (A-Z)</option>
+						<option value="-job__name" {% if sort_by == '-job__name' %}selected{% endif %}>Job Name (Z-A)</option>
+					</select>
+				</div>
+				<div class="col-md-2 d-flex align-items-end">
+					<button type="submit" class="btn btn-primary">Apply</button>
+					<a href="{% url 'jobs:job_execution_list' %}" class="btn btn-secondary ms-2">Reset</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Executions Table -->
+	<div class="card">
+		<div class="card-body">
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Job Name</th>
+							<th>Status</th>
+							<th>Started At</th>
+							<th>Completed At</th>
+							<th>Execution Time (s)</th>
+							<th>Error Message</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for execution in executions %}
+						<tr>
+							<td>
+								<a href="{% url 'jobs:job_detail' job_id=execution.job.id %}">
+									{{ execution.job.name }}
+								</a>
+							</td>
+							<td>
+								<span class="badge {% if execution.success %}bg-success{% else %}bg-danger{% endif %}">
+									{% if execution.success %}Success{% else %}Failed{% endif %}
+								</span>
+							</td>
+							<td>{{ execution.started_at|date:"Y-m-d H:i:s.u" }}</td>
+							<td>{{ execution.completed_at|date:"Y-m-d H:i:s.u" }}</td>
+							<td>{{ execution.execution_time|floatformat:3 }}</td>
+							<td>
+								{% if execution.error_message %}
+								<span class="text-danger">{{ execution.error_message|truncatechars:50 }}</span>
+								{% else %}
+								-
+								{% endif %}
+							</td>
+						</tr>
+						{% empty %}
+						<tr>
+							<td colspan="6" class="text-center">No executions found.</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
