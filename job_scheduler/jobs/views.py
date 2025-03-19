@@ -7,8 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import JobForm
-from django.utils import timezone
-from django.db.models import Avg, Count
+from django.db.models import Count
 from django.http import JsonResponse
 
 
@@ -212,11 +211,17 @@ def job_list(request):
     # Calculate average wait time for completed jobs
     completed_jobs = Job.objects.filter(user=request.user, status="completed")
     if completed_jobs.exists():
-        avg_wait_time = completed_jobs.aggregate(
-            avg_wait=Avg("started_at", output_field=timezone.now() - timezone.now())
-        )["avg_wait"]
-        if avg_wait_time:
-            stats["avg_wait_time"] = avg_wait_time.total_seconds()
+        # Calculate average wait time manually
+        total_wait_time = 0
+        count = 0
+        for job in completed_jobs:
+            if job.started_at and job.created_at:
+                wait_time = (job.started_at - job.created_at).total_seconds()
+                total_wait_time += wait_time
+                count += 1
+
+        if count > 0:
+            stats["avg_wait_time"] = total_wait_time / count
 
     return render(
         request,
